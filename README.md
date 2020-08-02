@@ -16,6 +16,7 @@ LutronClient.ConnectionStateListener connectionStateListener = new LutronClient.
         if(status == STATUS_CONNECTED) {
             // Connected! You can start sending control commands now.
             // Open a curtain for e.g: client.openCurtain(<INTEGRATION_ID>);
+            // Turn on a light: client.ledOn(<INTEGRATION_ID>);
         }
     }
 
