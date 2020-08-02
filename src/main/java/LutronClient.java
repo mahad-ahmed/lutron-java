@@ -37,14 +37,14 @@ class LutronClient implements Runnable {
          *               {@value #STATUS_TOO_MANY_ATTEMPTS}
          *               {@value #STATUS_EOF}
          */
-        abstract void onStateChanged(int status);
+        abstract void onStateChanged(LutronClient client, int status);
 
 
         /**
          * Called when an exception relating to the connection is incurred.
          * @param ex The exception
          */
-        abstract void onException(IOException ex);
+        abstract void onException(LutronClient client, IOException ex);
 
 
         /**
@@ -66,7 +66,7 @@ class LutronClient implements Runnable {
          * @param status Status code
          * @return String description of the status code
          */
-        String getStatusString(int status) {
+        static String getStatusString(int status) {
             return switch (status) {
                 case STATUS_CONNECTED -> "STATUS_CONNECTED";
                 case STATUS_EOF -> "STATUS_EOF";
@@ -157,8 +157,8 @@ class LutronClient implements Runnable {
             new Thread(this).start();
         }
         catch(IOException ex) {
-            new Thread(() -> connectionStateListener.onStateChanged(ConnectionStateListener.STATUS_CONNECT_FAILED)).start();
-            listener.onException(ex);
+            new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_CONNECT_FAILED)).start();
+            listener.onException(this, ex);
         }
     }
 
@@ -288,13 +288,13 @@ class LutronClient implements Runnable {
                 }
                 else if(checkLogin) {
                     if(buffer.toString().endsWith("NET>")) {
-                        new Thread(() -> connectionStateListener.onStateChanged(ConnectionStateListener.STATUS_CONNECTED)).start();
+                        new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_CONNECTED)).start();
                     }
                     else if(buffer.toString().endsWith("bad login")) {
-                        new Thread(() -> connectionStateListener.onStateChanged(ConnectionStateListener.STATUS_BAD_LOGIN)).start();
+                        new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_BAD_LOGIN)).start();
                     }
                     else if(buffer.toString().endsWith("login attempts.")) {
-                        new Thread(() ->connectionStateListener.onStateChanged(ConnectionStateListener.STATUS_TOO_MANY_ATTEMPTS)).start();
+                        new Thread(() ->connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_TOO_MANY_ATTEMPTS)).start();
                     }
                     else {
                         continue;
@@ -328,14 +328,14 @@ class LutronClient implements Runnable {
             disconnect();
 
             /*  Got EOF  */
-            new Thread(() -> connectionStateListener.onStateChanged(ConnectionStateListener.STATUS_EOF)).start();
-            new Thread(() -> connectionStateListener.onStateChanged(ConnectionStateListener.STATUS_DISCONNECTED)).start();
+            new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_EOF)).start();
+            new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_DISCONNECTED)).start();
         }
         catch(IOException ioe) {
             //ioe.printStackTrace();
             disconnect();
-            new Thread(() -> connectionStateListener.onStateChanged(ConnectionStateListener.STATUS_DISCONNECTED)).start();
-            new Thread(() -> connectionStateListener.onException(ioe)).start();
+            new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_DISCONNECTED)).start();
+            new Thread(() -> connectionStateListener.onException(this, ioe)).start();
         }
     }
 }
