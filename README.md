@@ -1,5 +1,5 @@
 # lutron-java
-A Java client to control Lutron Homeworks devices</br></br>
+A Java client to control Lutron Homeworks devices. (This is a work-in-progress, some features will be missing!)</br>
 
 
 ## Usage:
