@@ -45,6 +45,12 @@ LutronClient.ConnectionStateListener connectionStateListener = new LutronClient.
 </br>
 </br>
 
+## Notes:
+* #### To make it work with WearOS, you need to add a carriage return('\r') character after every message (including login & password)
+
+</br>
+</br>
+
 ## TODO:
 * #### XML dump parsing (Get a list of devices)
 * #### Button pad controls
