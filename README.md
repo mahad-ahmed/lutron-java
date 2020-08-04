@@ -41,3 +41,11 @@ LutronClient.ConnectionStateListener connectionStateListener = new LutronClient.
 
 ### Start the connection
 `client.connect(connectionStateListener);`
+
+</br>
+</br>
+
+## TODO:
+* #### XML dump parsing (Get a list of devices)
+* #### Button pad controls
+* #### (?) Auto send last failed command after reconnect
