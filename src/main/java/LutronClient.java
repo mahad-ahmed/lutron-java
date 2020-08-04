@@ -91,7 +91,7 @@ class LutronClient implements Runnable {
          * @param integrationId The device that changed its level
          * @param level The new level(%) of the device
          */
-        void onLevelChange(int integrationId, float level);
+        void onLevelChange(LutronClient client, int integrationId, float level);
     }
 
 
@@ -317,7 +317,7 @@ class LutronClient implements Runnable {
 //                                levelsMap.put(id, level);
 //                            }
                             for (OnLevelChangeListener onLevelChangeListener : onLevelChangeListeners) {
-                                new Thread(() -> onLevelChangeListener.onLevelChange(id, level)).start();
+                                new Thread(() -> onLevelChangeListener.onLevelChange(this, id, level)).start();
                             }
                             buffer = new StringBuffer();
                         }
