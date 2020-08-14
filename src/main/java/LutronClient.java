@@ -24,6 +24,7 @@ class LutronClient implements Runnable {
         public static final int STATUS_BAD_LOGIN = 2;
         public static final int STATUS_TOO_MANY_ATTEMPTS = 3;
         public static final int STATUS_EOF = 4;
+        public static final int STATUS_SEND_FAILED = 5;
 //        public static final int STATUS_RECONNECTED
 
 
@@ -36,6 +37,7 @@ class LutronClient implements Runnable {
          *               {@value #STATUS_BAD_LOGIN}
          *               {@value #STATUS_TOO_MANY_ATTEMPTS}
          *               {@value #STATUS_EOF}
+         *               {@value #STATUS_SEND_FAILED}
          */
         abstract void onStateChanged(LutronClient client, int status);
 
@@ -74,6 +76,7 @@ class LutronClient implements Runnable {
                 case STATUS_TOO_MANY_ATTEMPTS -> "STATUS_TOO_MANY_ATTEMPTS";
                 case STATUS_CONNECT_FAILED -> "STATUS_CONNECT_FAILED";
                 case STATUS_DISCONNECTED -> "STATUS_DISCONNECTED";
+                case STATUS_SEND_FAILED -> "STATUS_SEND_FAILED";
                 default -> "UNKNOWN_STATUS";
             };
         }
@@ -105,6 +108,9 @@ class LutronClient implements Runnable {
     private StringBuffer buffer = new StringBuffer();
 
     private ConnectionStateListener connectionStateListener;
+
+    private boolean autoRetry = true;
+    private String lastFailedMessage = null;
 
     private final ArrayList<OnLevelChangeListener> onLevelChangeListeners = new ArrayList<>();
 
@@ -138,6 +144,14 @@ class LutronClient implements Runnable {
     LutronClient(String host, int port) {
         this.host = host;
         this.port = port;
+    }
+
+    public boolean getAutoRetry() {
+        return autoRetry;
+    }
+
+    public void setAutoRetry(boolean autoRetry) {
+        this.autoRetry = autoRetry;
     }
 
 
@@ -196,7 +210,11 @@ class LutronClient implements Runnable {
             output.flush();
         }
         catch(Exception ex) {
-//            connect(connectionStateListener);
+            new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_SEND_FAILED)).start();
+            if(autoRetry) {
+                lastFailedMessage = message;
+                connect(connectionStateListener);
+            }
             ex.printStackTrace();
         }
     }
@@ -225,7 +243,7 @@ class LutronClient implements Runnable {
      * @param integrationId ID of the device to investigate the level of.
      */
     void requestLevel(int integrationId) {
-        sendMessage("?output," + integrationId + ",1");
+        sendMessage("?OUTPUT," + integrationId + ",1");
     }
 
     void openCurtain(int integrationId) {
@@ -266,6 +284,7 @@ class LutronClient implements Runnable {
 
 //    public void logout() {
 //        output.println("logout");
+//        output.flush();
 //    }
 
     @Override
@@ -289,6 +308,12 @@ class LutronClient implements Runnable {
                 else if(checkLogin) {
                     if(buffer.toString().endsWith("NET>")) {
                         new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_CONNECTED)).start();
+                        if(autoRetry && lastFailedMessage != null) {
+                            output.println(lastFailedMessage);
+                            output.flush();
+
+                            lastFailedMessage = null;
+                        }
                     }
                     else if(buffer.toString().endsWith("bad login")) {
                         new Thread(() -> connectionStateListener.onStateChanged(this, ConnectionStateListener.STATUS_BAD_LOGIN)).start();
