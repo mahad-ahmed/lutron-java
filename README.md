@@ -43,6 +43,7 @@ LutronClient.ConnectionStateListener connectionStateListener = new LutronClient.
 `client.connect(connectionStateListener);`
 
 </br>
+
 ### Let there be light
 `client.ledOn(<INTEGRATION_ID>);`
 
